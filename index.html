@@ -1,0 +1,1084 @@
+< html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Своя игра — Информационная безопасность, 3 класс</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #0a0e27 0%, #1a1f4e 50%, #0d1235 100%);
+    color: #e0e6ff;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(100, 150, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(150, 100, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(200, 150, 255, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.screen {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.screen.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ===== СТАРТОВЫЙ ЭКРАН ===== */
+#startScreen { text-align: center; padding: 20px; }
+
+.game-title {
+    font-size: 3.2em;
+    font-weight: bold;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffa500 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+    margin-bottom: 15px;
+    animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.2); }
+}
+
+.game-subtitle {
+    font-size: 1.3em;
+    color: #c0d0ff;
+    margin-bottom: 25px;
+}
+
+.game-info {
+    background: rgba(20, 30, 80, 0.8);
+    border: 2px solid rgba(100, 150, 255, 0.3);
+    border-radius: 15px;
+    padding: 20px 30px;
+    margin: 15px 0;
+    max-width: 600px;
+    box-shadow: 0 0 40px rgba(100, 150, 255, 0.2);
+    text-align: left;
+}
+
+.game-info p {
+    font-size: 1.05em;
+    margin: 6px 0;
+    color: #c0d0ff;
+}
+
+.setting-row {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.setting-row label {
+    font-size: 1.1em;
+    color: #c0d0ff;
+}
+
+.setting-row select, .setting-row input {
+    font-size: 1.1em;
+    padding: 8px 16px;
+    background: rgba(30, 40, 100, 0.9);
+    border: 2px solid rgba(100, 150, 255, 0.5);
+    border-radius: 8px;
+    color: #e0e6ff;
+    cursor: pointer;
+}
+
+.team-name-input {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.team-name-input input {
+    padding: 8px 14px;
+    font-size: 1em;
+    background: rgba(30, 40, 100, 0.9);
+    border: 2px solid rgba(100, 150, 255, 0.5);
+    border-radius: 8px;
+    color: #e0e6ff;
+    width: 250px;
+}
+
+.start-button {
+    font-size: 1.5em;
+    padding: 15px 50px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+    border: none;
+    border-radius: 50px;
+    color: #0a0e27;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+    transition: all 0.3s;
+    margin-top: 20px;
+}
+
+.start-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 60px rgba(255, 215, 0, 0.8);
+}
+
+/* ===== ИГРОВОЙ ЭКРАН ===== */
+#gameScreen {
+    padding: 10px 15px;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.game-header {
+    width: 100%;
+    text-align: center;
+    flex: 0 0 auto;
+    padding: 5px 0;
+}
+
+.game-header h2 {
+    font-size: 1.5em;
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.game-board-wrapper {
+    flex: 1 1 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.game-board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.category-header {
+    background: linear-gradient(135deg, rgba(100, 150, 255, 0.3) 0%, rgba(150, 100, 255, 0.3) 100%);
+    border: 2px solid rgba(100, 150, 255, 0.6);
+    border-radius: 10px;
+    padding: 8px;
+    font-size: 0.95em;
+    font-weight: bold;
+    color: #ffed4e;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    min-height: 55px;
+}
+
+.question-cell {
+    background: linear-gradient(135deg, rgba(30, 40, 100, 0.9) 0%, rgba(40, 50, 120, 0.9) 100%);
+    border: 2px solid rgba(100, 150, 255, 0.4);
+    border-radius: 10px;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #ffd700;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    min-height: 60px;
+}
+
+.question-cell:hover:not(.used) {
+    border-color: #ffd700;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+    transform: scale(1.02);
+}
+
+.question-cell.used {
+    background: rgba(20, 25, 60, 0.4);
+    border-color: rgba(100, 150, 255, 0.15);
+    color: rgba(100, 120, 180, 0.3);
+    cursor: default;
+    text-shadow: none;
+}
+
+/* Панель команд */
+.teams-panel {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 15px;
+    background: rgba(10, 15, 40, 0.7);
+    border-top: 2px solid rgba(100, 150, 255, 0.3);
+    border-radius: 12px 12px 0 0;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+}
+
+.team-card {
+    flex: 1;
+    min-width: 180px;
+    max-width: 350px;
+    background: linear-gradient(135deg, rgba(30, 40, 100, 0.7) 0%, rgba(40, 50, 120, 0.7) 100%);
+    border: 2px solid rgba(100, 150, 255, 0.3);
+    border-radius: 10px;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    transition: all 0.3s;
+}
+
+.team-card.active-turn {
+    border-color: #ffd700;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 165, 0, 0.15) 100%);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+}
+
+.team-name {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.team-score {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #ffed4e;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.bottom-controls {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 5px 0;
+    flex: 0 0 auto;
+}
+
+.control-button {
+    font-size: 0.95em;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, rgba(100, 150, 255, 0.3) 0%, rgba(150, 100, 255, 0.3) 100%);
+    border: 2px solid rgba(100, 150, 255, 0.5);
+    border-radius: 20px;
+    color: #e0e6ff;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.control-button:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 15px rgba(100, 150, 255, 0.5);
+}
+
+.control-button.danger {
+    background: linear-gradient(135deg, rgba(255, 80, 80, 0.3) 0%, rgba(255, 120, 120, 0.3) 100%);
+    border-color: rgba(255, 100, 100, 0.5);
+}
+
+/* ===== МОДАЛЬНОЕ ОКНО ВОПРОСА ===== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal.active { display: flex; }
+
+.modal-content {
+    background: linear-gradient(135deg, rgba(20, 30, 80, 0.97) 0%, rgba(30, 40, 100, 0.97) 100%);
+    border: 3px solid rgba(100, 150, 255, 0.6);
+    border-radius: 20px;
+    padding: 25px 35px;
+    max-width: 800px;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(100, 150, 255, 0.5);
+}
+
+.question-category {
+    font-size: 1em;
+    color: #c0d0ff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.question-value {
+    font-size: 2em;
+    color: #ffd700;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.question-text {
+    font-size: 1.4em;
+    line-height: 1.4;
+    color: #ffffff;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(10, 15, 40, 0.5);
+    border-radius: 12px;
+    border: 1px solid rgba(100, 150, 255, 0.3);
+}
+
+.fun-fact {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 165, 0, 0.1) 100%);
+    border-left: 4px solid #ffd700;
+    padding: 12px 18px;
+    margin: 15px 0;
+    border-radius: 8px;
+    text-align: left;
+    font-size: 1.05em;
+    color: #ffed4e;
+    line-height: 1.4;
+}
+
+.fun-fact::before {
+    content: "💡 Интересный факт: ";
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.answer-block {
+    background: rgba(0, 200, 100, 0.1);
+    border: 2px solid rgba(0, 255, 150, 0.4);
+    border-radius: 12px;
+    padding: 15px;
+    margin: 15px 0;
+    display: none;
+}
+
+.answer-block.visible { display: block; }
+
+.answer-label {
+    font-size: 0.9em;
+    color: #00ff88;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+.answer-text {
+    font-size: 1.3em;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.modal-button {
+    font-size: 1em;
+    padding: 10px 22px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.modal-button:hover { transform: scale(1.03); }
+
+.modal-button.primary {
+    background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+    color: #0a0e27;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
+.modal-button.secondary {
+    background: linear-gradient(135deg, rgba(100, 150, 255, 0.3) 0%, rgba(150, 100, 255, 0.3) 100%);
+    color: #e0e6ff;
+    border: 2px solid rgba(100, 150, 255, 0.5);
+}
+
+.modal-button.success {
+    background: linear-gradient(135deg, #00c853 0%, #00e676 100%);
+    color: #0a0e27;
+    box-shadow: 0 0 15px rgba(0, 200, 100, 0.4);
+}
+
+.modal-button.danger {
+    background: linear-gradient(135deg, #ff5252 0%, #ff1744 100%);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 50, 50, 0.4);
+}
+
+.scoring-section {
+    display: none;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(100, 150, 255, 0.3);
+}
+
+.scoring-section.visible { display: block; }
+
+.scoring-title {
+    font-size: 1.1em;
+    color: #ffd700;
+    margin-bottom: 10px;
+}
+
+.scoring-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.team-score-btn {
+    padding: 10px 18px;
+    background: linear-gradient(135deg, rgba(0, 200, 100, 0.3) 0%, rgba(0, 255, 150, 0.3) 100%);
+    border: 2px solid rgba(0, 255, 150, 0.5);
+    border-radius: 20px;
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    font-size: 0.95em;
+}
+
+.team-score-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(0, 255, 150, 0.5);
+}
+
+.team-score-btn.no-answer {
+    background: linear-gradient(135deg, rgba(150, 150, 150, 0.3) 0%, rgba(100, 100, 100, 0.3) 100%);
+    border-color: rgba(150, 150, 150, 0.5);
+}
+
+/* ===== ФИНАЛЬНЫЙ ЭКРАН ===== */
+#finalScreen { text-align: center; padding: 30px; overflow-y: auto; }
+
+.final-title {
+    font-size: 2.5em;
+    color: #ffd700;
+    margin-bottom: 20px;
+    animation: glow 2s ease-in-out infinite;
+}
+
+.final-results {
+    background: rgba(20, 30, 80, 0.8);
+    border: 2px solid rgba(100, 150, 255, 0.3);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px 0;
+    max-width: 700px;
+    width: 100%;
+}
+
+.team-result {
+    font-size: 1.3em;
+    margin: 10px 0;
+    padding: 12px;
+    background: rgba(30, 40, 100, 0.5);
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.winner {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 165, 0, 0.3) 100%);
+    border: 2px solid #ffd700;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.medal { font-size: 1.3em; margin-right: 10px; }
+
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 768px) {
+    .game-title { font-size: 2em; }
+    .game-board { gap: 5px; }
+    .category-header { font-size: 0.75em; padding: 5px; min-height: 45px; }
+    .question-cell { font-size: 1.3em; min-height: 50px; }
+    .question-text { font-size: 1.1em; }
+    .team-card { padding: 8px 10px; min-width: 140px; }
+    .team-name { font-size: 0.95em; }
+    .team-score { font-size: 1.2em; }
+    .modal-content { padding: 20px; }
+}
+
+@media (max-height: 600px) {
+    .game-header h2 { font-size: 1.2em; }
+    .category-header { font-size: 0.8em; min-height: 40px; }
+    .question-cell { font-size: 1.4em; min-height: 45px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== СТАРТОВЫЙ ЭКРАН ===== -->
+<div id="startScreen" class="screen active">
+    <h1 class="game-title">СВОЯ ИГРА</h1>
+    <div class="game-subtitle">Информационная безопасность · 3 класс</div>
+    <div class="game-info">
+        <p><strong>📚 Предмет:</strong> Информационная безопасность</p>
+        <p><strong>🎯 Темы:</strong> Цифровая гигиена, безопасный поиск, правила поведения в сети, защита личных данных, мошенничество</p>
+        <p><strong>⏱️ Время:</strong> 35 минут</p>
+        <p><strong>🎲 Формат:</strong> 5 категорий × 5 вопросов (100–500 баллов)</p>
+        <p><strong>💡 Стиль:</strong> с интересными фактами</p>
+    </div>
+
+    <div class="setting-row">
+        <label for="teamCount">Количество команд:</label>
+        <select id="teamCount" onchange="updateTeamInputs()">
+            <option value="2">2 команды</option>
+            <option value="3" selected>3 команды</option>
+            <option value="4">4 команды</option>
+        </select>
+    </div>
+
+    <div class="team-name-input" id="teamNameInputs"></div>
+
+    <button class="start-button" onclick="startGame()">НАЧАТЬ ИГРУ</button>
+</div>
+
+<!-- ===== ИГРОВОЙ ЭКРАН ===== -->
+<div id="gameScreen" class="screen">
+    <div class="game-header">
+        <h2>🎯 СВОЯ ИГРА · Информационная безопасность</h2>
+    </div>
+
+    <div class="game-board-wrapper">
+        <div class="game-board" id="gameBoard"></div>
+    </div>
+
+    <div class="bottom-controls">
+        <button class="control-button" onclick="showScoreboard()">📊 Табло</button>
+        <button class="control-button danger" onclick="confirmEndGame()">🏁 Завершить игру</button>
+    </div>
+
+    <div class="teams-panel" id="teamsPanel"></div>
+</div>
+
+<!-- ===== ФИНАЛЬНЫЙ ЭКРАН ===== -->
+<div id="finalScreen" class="screen">
+    <h1 class="final-title">🏆 ИГРА ЗАВЕРШЕНА 🏆</h1>
+    <div class="final-results" id="finalResults"></div>
+    <button class="start-button" onclick="resetGame()">СЫГРАТЬ ЕЩЁ РАЗ</button>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО ВОПРОСА ===== -->
+<div id="questionModal" class="modal">
+    <div class="modal-content">
+        <div class="question-category" id="modalCategory"></div>
+        <div class="question-value" id="modalValue"></div>
+        <div class="question-text" id="modalQuestion"></div>
+        <div class="fun-fact" id="modalFact"></div>
+        <div class="answer-block" id="answerBlock">
+            <div class="answer-label">Правильный ответ</div>
+            <div class="answer-text" id="modalAnswer"></div>
+        </div>
+        <div class="modal-buttons" id="initialButtons">
+            <button class="modal-button primary" onclick="showAnswer()">Показать ответ</button>
+            <button class="modal-button secondary" onclick="skipQuestion()">Пропустить вопрос</button>
+        </div>
+        <div class="scoring-section" id="scoringSection">
+            <div class="scoring-title">Кто ответил правильно?</div>
+            <div class="scoring-buttons" id="scoringButtons"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО ТАБЛО ===== -->
+<div id="scoreboardModal" class="modal">
+    <div class="modal-content">
+        <h3 style="color:#ffd700; font-size:1.8em; margin-bottom:20px;">📊 ТЕКУЩЕЕ ТАБЛО</h3>
+        <div id="scoreboardContent"></div>
+        <button class="modal-button primary" onclick="closeScoreboard()" style="margin-top:20px;">Закрыть</button>
+    </div>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ===== -->
+<div id="confirmModal" class="modal">
+    <div class="modal-content">
+        <h3 style="color:#ffd700; font-size:1.6em; margin-bottom:15px;">Завершить игру?</h3>
+        <p style="font-size:1.1em; color:#c0d0ff;">Текущие результаты будут зафиксированы и показан победитель.</p>
+        <div style="display:flex; gap:15px; justify-content:center; margin-top:20px; flex-wrap:wrap;">
+            <button class="modal-button primary" onclick="endGame()">Да, завершить</button>
+            <button class="modal-button secondary" onclick="closeConfirm()">Нет, продолжить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== БАЗА ВОПРОСОВ =====
+const categories = [
+    {
+        name: "Цифровая гигиена",
+        icon: "🧼",
+        questions: [
+            {
+                value: 100,
+                question: "Сколько минут непрерывно можно работать за компьютером ученику 3 класса?",
+                answer: "15 минут",
+                fact: "Глаза ребёнка устают в 2 раза быстрее, чем у взрослого. Поэтому после 15 минут нужно обязательно делать перерыв!"
+            },
+            {
+                value: 200,
+                question: "Какое расстояние должно быть между глазами и экраном монитора?",
+                answer: "50–70 сантиметров",
+                fact: "Это примерно длина вытянутой руки от локтя до кончиков пальцев. Если экран ближе — портится зрение, если дальше — приходится щуриться."
+            },
+            {
+                value: 300,
+                question: "Какое правило помогает сохранить зрение при работе с экраном? Каждые 20 минут смотри на 20 секунд на предмет в 20 футах (6 м). Как оно называется?",
+                answer: "Правило «20-20-20»",
+                fact: "Это правило придумали американские офтальмологи. Оно работает даже для взрослых — попробуй применить его при просмотре мультиков!"
+            },
+            {
+                value: 400,
+                question: "Почему учителя запрещают есть за компьютером?",
+                answer: "Крошки попадают в клавиатуру и ломают её, а еда отвлекает от работы",
+                fact: "В одной клавиатуре может жить больше бактерий, чем под ободком унитаза! Именно поэтому мыть руки перед компьютером — это важно."
+            },
+            {
+                value: 500,
+                question: "Маша сидит за компьютером уже 40 минут, спина согнута, глаза близко к экрану. Назови минимум три правила, которые она нарушила.",
+                answer: "1) Превышено время работы (15 мин). 2) Неправильная осанка. 3) Слишком близкое расстояние до экрана. 4) Нет перерыва.",
+                fact: "Неправильная поза за компьютером за год может испортить осанку так, что придётся носить специальный корсет. Спина — как фундамент дома: кривой — и всё здание покосится."
+            }
+        ]
+    },
+    {
+        name: "Безопасный поиск",
+        icon: "🔍",
+        questions: [
+            {
+                value: 100,
+                question: "Где лучше всего искать информацию для домашнего задания?",
+                answer: "На проверенных образовательных сайтах",
+                fact: "В Рунете более 15 миллионов сайтов, но лишь малая часть из них подходит для школьников. Учёные придумали специальные детские поисковики — например, «Гогуль» и «Века»."
+            },
+            {
+                value: 200,
+                question: "Сайт предлагает: «Введи номер телефона мамы, чтобы получить подарок». Что нужно сделать?",
+                answer: "Закрыть сайт и рассказать родителям",
+                fact: "Каждый день в интернете появляется около 30 000 мошеннических сайтов. Они часто маскируются под подарки и игры."
+            },
+            {
+                value: 300,
+                question: "Как проверить, можно ли доверять информации на сайте?",
+                answer: "Сравнить с другими источниками, проверить автора и дату публикации",
+                fact: "В интернете любой человек может написать что угодно — даже то, чего не было. Поэтому учёные всегда проверяют информацию минимум по трём источникам."
+            },
+            {
+                value: 400,
+                question: "Петя ввёл в поисковик «реферат». Ему выдало 5 миллионов страниц. Как сделать поиск точнее?",
+                answer: "Уточнить запрос: добавить тему, класс, конкретные слова. Например: «реферат по окружающему миру 3 класс про воду»",
+                fact: "Поисковик Google обрабатывает более 8,5 миллиардов запросов в день. Чем точнее запрос — тем быстрее найдёшь нужное. Это называется «поисковый запрос»."
+            },
+            {
+                value: 500,
+                question: "Катя нашла в интернете статью, где написано, что Земля плоская. В учебнике — что круглая. Подруга говорит: «Поверь интернету, там же всё написано!». Что ответит Катя и почему?",
+                answer: "Нельзя верить одному источнику. Нужно сравнить с учебником, энциклопедией, спросить учителя. Интернет может ошибаться или врать.",
+                fact: "В 2018 году исследование показало: 9 из 10 детей верят всему, что читают в интернете. Но даже Википедию может отредактировать любой человек — поэтому её тоже нужно проверять."
+            }
+        ]
+    },
+    {
+        name: "Правила поведения",
+        icon: "💬",
+        questions: [
+            {
+                value: 100,
+                question: "Как нужно здороваться с друзьями в школьном чате?",
+                answer: "Вежливо: «Привет», «Здравствуйте», «Добрый день»",
+                fact: "Даже в интернете действуют те же правила вежливости, что и в жизни. Учёные заметили: люди, которые здороваются в чатах, реже ссорятся."
+            },
+            {
+                value: 200,
+                question: "Как называется явление, когда в интернете кого-то специально обижают, дразнят или пугают?",
+                answer: "Кибербуллинг (или интернет-травля)",
+                fact: "Слово «буллинг» пришло из английского и означает «задирачество». Каждый третий школьник в мире хотя бы раз сталкивался с кибербуллингом."
+            },
+            {
+                value: 300,
+                question: "Тебя начали обижать в чате. Какие два главных шага нужно сделать?",
+                answer: "1) Не отвечать обидчику. 2) Рассказать взрослому (родителям или учителю).",
+                fact: "Психологи доказали: если не отвечать обидчику, ему быстро становится скучно, и он перестаёт. А взрослый поможет правильно решить ситуацию."
+            },
+            {
+                value: 400,
+                question: "В чате кто-то написал сообщение ЗАГЛАВНЫМИ БУКВАМИ. Что это значит в интернете?",
+                answer: "Это воспринимается как КРИК. Так делать нельзя.",
+                fact: "В интернете_caps LOCK = крик_. Если писать заглавными, собеседник подумает, что ты на него злишься. Это правило сетевого этикета с 1980-х годов!"
+            },
+            {
+                value: 500,
+                question: "В классе появился чат без учителя. Одни дети начали выкладывать смешные фото одноклассников без их разрешения. Другие смеются. Третьи молчат. Кто нарушает правила и что нужно сделать?",
+                answer: "Нарушают те, кто выкладывает фото без разрешения, и те, кто смеётся. Нужно: попросить удалить фото, сказать взрослому, поддержать того, кого обидели.",
+                fact: "Фотография человека — это его личная информация. По закону её нельзя публиковать без разрешения, даже если человек твой друг. Это правило работает и для детей, и для взрослых."
+            }
+        ]
+    },
+    {
+        name: "Защита данных",
+        icon: "🔐",
+        questions: [
+            {
+                value: 100,
+                question: "Какую информацию нельзя сообщать незнакомцам в интернете?",
+                answer: "Домашний адрес, номер телефона, номер школы, фамилию, фото с геолокацией",
+                fact: "По одному только адресу и фото из окна дома мошенник может узнать, когда тебя нет дома. Поэтому в профилях лучше ставить картинку, а не своё фото."
+            },
+            {
+                value: 200,
+                question: "Какой из паролей самый надёжный?",
+                answer: "Тот, в котором есть большие и маленькие буквы, цифры и специальные знаки. Например: K0t!Vasya7",
+                fact: "Пароль «12345» хакер взломает за 1 секунду. Пароль из 8 символов с разными знаками — за 3 года. А пароль из 12 символов — за несколько тысяч лет!"
+            },
+            {
+                value: 300,
+                question: "Друг просит твой пароль от игры «на минутку». Что ответить?",
+                answer: "Отказать. Пароль нельзя давать никому — даже друзьям.",
+                fact: "Статистика показывает: 40% взломов аккаунтов у детей происходят именно так — «друг попросил». Настоящий друг поймёт и не обидится."
+            },
+            {
+                value: 400,
+                question: "Что такое «логин» и что такое «пароль»? Чем они отличаются?",
+                answer: "Логин — это имя пользователя (как тебя зовут в системе). Пароль — это секретный ключ, который знаешь только ты.",
+                fact: "Слово «логин» происходит от английского «login» — «входить». Представь: логин — это твоя квартира, а пароль — ключ от неё. Ключ нельзя терять и давать чужим."
+            },
+            {
+                value: 500,
+                question: "Маша выложила в соцсети фото своего нового телефона, написала: «Живу на улице Ленина, дом 5, квартира 12. Приходите в гости!». Какие три ошибки она сделала?",
+                answer: "1) Показала дорогой телефон (могут украсть). 2) Написала точный адрес. 3) Пригласила незнакомцев домой.",
+                fact: "В 2022 году полиция раскрыла 1500 краж, которые совершили после того, как жертвы сами выложили свои планы и адреса в соцсети. Интернет помнит всё — даже если ты удалил пост."
+            }
+        ]
+    },
+    {
+        name: "Мошенники",
+        icon: "🎭",
+        questions: [
+            {
+                value: 100,
+                question: "Как называется человек, который обманывает других в интернете, чтобы получить деньги или данные?",
+                answer: "Мошенник (или интернет-мошенник)",
+                fact: "В мире каждый день появляется более 100 000 новых мошенников. Они очень хитрые и придумывают новые обманы каждый день."
+            },
+            {
+                value: 200,
+                question: "Тебе пришло письмо: «Ты выиграл 10 000 рублей! Перейди по ссылке и введи данные карты». Что делать?",
+                answer: "Удалить письмо. Никому не переходить по ссылке и не вводить данные.",
+                fact: "Если бы тебе действительно кто-то хотел дать деньги, он бы не просил данные карты. Это как если бы незнакомец на улице сказал: «Дай мне ключи от квартиры — я принесу тебе торт»."
+            },
+            {
+                value: 300,
+                question: "В онлайн-игре взрослый игрок пишет тебе: «Давай встретимся в парке, я принесу тебе крутой подарок». Что делать?",
+                answer: "Никогда не соглашаться. Сразу рассказать родителям. Встречаться с незнакомцами из интернета опасно.",
+                fact: "По статистике, 9 из 10 незнакомцев, которые предлагают встречу детям в интернете, скрывают свои настоящие намерения. Даже если они кажутся добрыми."
+            },
+            {
+                value: 400,
+                question: "Что такое «фишинг»?",
+                answer: "Это вид мошенничества, когда злоумышленники притворяются настоящим сайтом или человеком, чтобы украсть пароли и данные.",
+                fact: "Слово «фишинг» происходит от английского «fishing» — «рыбалка». Мошенник закидывает «удочку» (поддельное письмо) и ждёт, пока кто-то «клюнет». Каждый день в мире происходит более 3 миллионов таких атак."
+            },
+            {
+                value: 500,
+                question: "Тебе пришло письмо якобы от школы: «Срочно оплатите обед! Перейдите по ссылке и введите карту мамы». В письме есть логотип школы и имя директора. Назови четыре признака, по которым можно понять, что это мошенники.",
+                answer: "1) Срочность («срочно»). 2) Просят данные карты. 3) Ссылка ведёт на странный сайт. 4) Настоящая школа никогда не просит оплату по email.",
+                fact: "Настоящие организации никогда не просят срочную оплату по email с данными карты. Если сомневаешься — всегда позвони в организацию по известному тебе номеру и спроси. Это правило работает для банков, школ и магазинов."
+            }
+        ]
+    }
+];
+
+// ===== СОСТОЯНИЕ ИГРЫ =====
+let gameState = {
+    teams: [],
+    usedQuestions: new Set(),
+    currentQuestion: null
+};
+
+// ===== ИНИЦИАЛИЗАЦИЯ СТАРТОВОГО ЭКРАНА =====
+function updateTeamInputs() {
+    const count = parseInt(document.getElementById('teamCount').value);
+    const container = document.getElementById('teamNameInputs');
+    container.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Название команды ${i + 1}`;
+        input.value = `Команда ${i + 1}`;
+        input.id = `teamName${i}`;
+        container.appendChild(input);
+    }
+}
+
+updateTeamInputs();
+
+// ===== СТАРТ ИГРЫ =====
+function startGame() {
+    const count = parseInt(document.getElementById('teamCount').value);
+    gameState.teams = [];
+    for (let i = 0; i < count; i++) {
+        const nameInput = document.getElementById(`teamName${i}`);
+        const name = nameInput.value.trim() || `Команда ${i + 1}`;
+        gameState.teams.push({ name: name, score: 0 });
+    }
+    gameState.usedQuestions = new Set();
+    renderBoard();
+    renderTeamsPanel();
+    showScreen('gameScreen');
+}
+
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+}
+
+// ===== ОТРИСОВКА ИГРОВОГО ПОЛЯ =====
+function renderBoard() {
+    const board = document.getElementById('gameBoard');
+    board.innerHTML = '';
+
+    // Заголовки категорий
+    categories.forEach(cat => {
+        const header = document.createElement('div');
+        header.className = 'category-header';
+        header.innerHTML = `${cat.icon}<br>${cat.name}`;
+        board.appendChild(header);
+    });
+
+    // Вопросы по строкам (100, 200, 300, 400, 500)
+    for (let row = 0; row < 5; row++) {
+        categories.forEach((cat, colIdx) => {
+            const q = cat.questions[row];
+            const cell = document.createElement('div');
+            cell.className = 'question-cell';
+            const key = `${colIdx}-${row}`;
+            cell.dataset.key = key;
+            cell.textContent = q.value;
+            if (gameState.usedQuestions.has(key)) {
+                cell.classList.add('used');
+            } else {
+                cell.onclick = () => openQuestion(colIdx, row);
+            }
+            board.appendChild(cell);
+        });
+    }
+}
+
+// ===== ПАНЕЛЬ КОМАНД =====
+function renderTeamsPanel() {
+    const panel = document.getElementById('teamsPanel');
+    panel.innerHTML = '';
+    gameState.teams.forEach(team => {
+        const card = document.createElement('div');
+        card.className = 'team-card';
+        card.innerHTML = `
+            <div class="team-name">${team.name}</div>
+            <div class="team-score">${team.score}</div>
+        `;
+        panel.appendChild(card);
+    });
+}
+
+// ===== ОТКРЫТИЕ ВОПРОСА =====
+function openQuestion(colIdx, rowIdx) {
+    const cat = categories[colIdx];
+    const q = cat.questions[rowIdx];
+    const key = `${colIdx}-${rowIdx}`;
+
+    if (gameState.usedQuestions.has(key)) return;
+
+    gameState.currentQuestion = { colIdx, rowIdx, key, value: q.value };
+
+    document.getElementById('modalCategory').textContent = `${cat.icon} ${cat.name}`;
+    document.getElementById('modalValue').textContent = `${q.value} баллов`;
+    document.getElementById('modalQuestion').textContent = q.question;
+    document.getElementById('modalFact').textContent = q.fact;
+    document.getElementById('modalAnswer').textContent = q.answer;
+
+    document.getElementById('answerBlock').classList.remove('visible');
+    document.getElementById('scoringSection').classList.remove('visible');
+    document.getElementById('initialButtons').style.display = 'flex';
+
+    document.getElementById('questionModal').classList.add('active');
+}
+
+// ===== ПОКАЗАТЬ ОТВЕТ =====
+function showAnswer() {
+    document.getElementById('answerBlock').classList.add('visible');
+    document.getElementById('initialButtons').style.display = 'none';
+    document.getElementById('scoringSection').classList.add('visible');
+
+    const buttonsContainer = document.getElementById('scoringButtons');
+    buttonsContainer.innerHTML = '';
+
+    gameState.teams.forEach((team, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'team-score-btn';
+        btn.textContent = `✓ ${team.name}`;
+        btn.onclick = () => awardPoints(idx);
+        buttonsContainer.appendChild(btn);
+    });
+
+    const noAnswerBtn = document.createElement('button');
+    noAnswerBtn.className = 'team-score-btn no-answer';
+    noAnswerBtn.textContent = 'Никто не ответил';
+    noAnswerBtn.onclick = () => closeQuestion();
+    buttonsContainer.appendChild(noAnswerBtn);
+}
+
+// ===== НАЧИСЛИТЬ БАЛЛЫ =====
+function awardPoints(teamIdx) {
+    gameState.teams[teamIdx].score += gameState.currentQuestion.value;
+    closeQuestion();
+}
+
+// ===== ЗАКРЫТЬ ВОПРОС =====
+function closeQuestion() {
+    if (gameState.currentQuestion) {
+        gameState.usedQuestions.add(gameState.currentQuestion.key);
+    }
+    document.getElementById('questionModal').classList.remove('active');
+    renderBoard();
+    renderTeamsPanel();
+    checkGameEnd();
+}
+
+// ===== ПРОПУСТИТЬ ВОПРОС =====
+function skipQuestion() {
+    closeQuestion();
+}
+
+// ===== ПРОВЕРКА КОНЦА ИГРЫ =====
+function checkGameEnd() {
+    const totalQuestions = categories.length * 5;
+    if (gameState.usedQuestions.size >= totalQuestions) {
+        setTimeout(endGame, 500);
+    }
+}
+
+// ===== ТАБЛО =====
+function showScoreboard() {
+    const content = document.getElementById('scoreboardContent');
+    const sorted = [...gameState.teams].sort((a, b) => b.score - a.score);
+    let html = '';
+    sorted.forEach((team, idx) => {
+        const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : ''));
+        html += `
+            <div class="team-result ${idx === 0 ? 'winner' : ''}">
+                <span><span class="medal">${medal}</span>${team.name}</span>
+                <span style="color:#ffed4e;">${team.score}</span>
+            </div>
+        `;
+    });
+    content.innerHTML = html;
+    document.getElementById('scoreboardModal').classList.add('active');
+}
+
+function closeScoreboard() {
+    document.getElementById('scoreboardModal').classList.remove('active');
+}
+
+// ===== ЗАВЕРШЕНИЕ ИГРЫ =====
+function confirmEndGame() {
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+function closeConfirm() {
+    document.getElementById('confirmModal').classList.remove('active');
+}
+
+function endGame() {
+    document.getElementById('confirmModal').classList.remove('active');
+    document.getElementById('questionModal').classList.remove('active');
+
+    const sorted = [...gameState.teams].sort((a, b) => b.score - a.score);
+    const results = document.getElementById('finalResults');
+    let html = '';
+    sorted.forEach((team, idx) => {
+        const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : ''));
+        const winnerClass = idx === 0 ? 'winner' : '';
+        html += `
+            <div class="team-result ${winnerClass}">
+                <span><span class="medal">${medal}</span>${team.name}</span>
+                <span style="color:#ffed4e; font-size:1.3em;">${team.score} баллов</span>
+            </div>
+        `;
+    });
+
+    html += `
+        <div style="margin-top:20px; padding:15px; background:rgba(10,15,40,0.5); border-radius:10px; text-align:left;">
+            <h4 style="color:#ffd700; margin-bottom:10px;">📌 Что повторить на следующем уроке:</h4>
+            <ul style="list-style:none; padding:0; color:#c0d0ff;">
+                <li style="padding:4px 0;">▸ Надёжные пароли и защита аккаунтов</li>
+                <li style="padding:4px 0;">▸ Распознавание фишинга и мошенничества</li>
+                <li style="padding:4px 0;">▸ Цифровая гигиена и правило «20-20-20»</li>
+            </ul>
+        </div>
+    `;
+
+    results.innerHTML = html;
+    showScreen('finalScreen');
+}
+
+// ===== СБРОС ИГРЫ =====
+function resetGame() {
+    gameState = { teams: [], usedQuestions: new Set(), currentQuestion: null };
+    showScreen('startScreen');
+}
+</script>
+</body>
+</html>
